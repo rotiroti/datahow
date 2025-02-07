@@ -11,6 +11,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rotiroti/datahow"
 )
 
@@ -83,7 +85,11 @@ func TestSafeExistsOrAdd(t *testing.T) {
 func TestHandleLog(t *testing.T) {
 	ctx := context.Background()
 	store := datahow.NewInMemory()
-	srv := datahow.NewLogServer(store)
+	counter := promauto.NewCounter(prometheus.CounterOpts{
+		Name: "unique_ip_addresses",
+		Help: "No. of unique IP addresses",
+	})
+	srv := datahow.NewLogServer(store, counter)
 	payload := struct {
 		IPAddress string `json:"ip"`
 	}{

@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // A InMemory represents a concurrent-safe set of IP addresses.
@@ -36,14 +38,16 @@ func (i *InMemory) ExistOrAdd(ip string) bool {
 
 // LogServer represents an HTTP server that handles incoming log records.
 type LogServer struct {
-	mux   *http.ServeMux
-	store *InMemory
+	mux    *http.ServeMux
+	store  *InMemory
+	metric prometheus.Counter
 }
 
 // NewLogServer creates a new LogServer with the provided InMemory storage.
-func NewLogServer(im *InMemory) *LogServer {
+func NewLogServer(im *InMemory, c prometheus.Counter) *LogServer {
 	srv := &LogServer{
-		store: im,
+		store:  im,
+		metric: c,
 	}
 	srv.routes()
 
@@ -81,7 +85,10 @@ func (l *LogServer) handleLog() http.HandlerFunc {
 			return
 		}
 
-		_ = l.store.ExistOrAdd(jsonRecord.IPAddress)
+		// Increment Prometheus metric only if the IP is new
+		if !l.store.ExistOrAdd(jsonRecord.IPAddress) {
+			l.metric.Inc()
+		}
 
 		w.WriteHeader(http.StatusOK)
 	}
