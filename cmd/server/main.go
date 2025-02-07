@@ -12,6 +12,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rotiroti/datahow"
 )
 
@@ -33,11 +34,21 @@ func run(ctx context.Context) error {
 		IdleTimeout:       30 * time.Second,
 	}
 
+	// Configure metrics server
+	metricsServer := http.NewServeMux()
+	metricsServer.Handle("/metrics", promhttp.Handler())
+	httpMetricsServer := &http.Server{
+		Addr:              ":9090", // TODO: Pass this as environment variable
+		Handler:           metricsServer,
+		ReadHeaderTimeout: 3 * time.Second,
+	}
+
 	// Create a context that listens for interrupt signals
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
 	defer stop()
 
 	logServerErrChan := make(chan error, 1)
+	metricsServerErrChan := make(chan error, 1)
 
 	go func() {
 		slog.Info("Starting HTTP log server...")
@@ -48,19 +59,31 @@ func run(ctx context.Context) error {
 		}
 	}()
 
+	go func() {
+		slog.Info("Starting HTTP metrics server...")
+		if err := httpMetricsServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("HTTP metrics server failed to listen and serve", "error", err)
+			metricsServerErrChan <- err
+		}
+	}()
+
 	select {
 	case <-ctx.Done():
 	case err := <-logServerErrChan:
 		return fmt.Errorf("HTTP log server startup failed: %w", err)
+	case err := <-metricsServerErrChan:
+		return fmt.Errorf("HTTP metrics server startup failed: %w", err)
 	}
 
 	ctxShutdown, stopShutdown := context.WithTimeout(context.Background(), 5*time.Second)
 	defer stopShutdown()
 
-	slog.Info("Shutting down HTTP log server...")
-
 	if err := httpLogServer.Shutdown(ctxShutdown); err != nil {
 		return fmt.Errorf("HTTP log server shutdown failed: %w", err)
+	}
+
+	if err := httpMetricsServer.Shutdown(ctxShutdown); err != nil {
+		return fmt.Errorf("HTTP metrics server shutdown failed: %w", err)
 	}
 
 	return nil
