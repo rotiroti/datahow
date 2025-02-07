@@ -79,14 +79,8 @@ func (l *LogServer) handleLog() http.HandlerFunc {
 			return
 		}
 
-		if jsonRecord.IPAddress == "" {
-			http.Error(w, "handleLog(): empty IP address", http.StatusUnprocessableEntity)
-
-			return
-		}
-
 		// Increment Prometheus metric only if the IP is new
-		if !l.store.ExistOrAdd(jsonRecord.IPAddress) {
+		if jsonRecord.IPAddress != "" && !l.store.ExistOrAdd(jsonRecord.IPAddress) {
 			l.metric.Inc()
 		}
 
