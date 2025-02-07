@@ -1,0 +1,8 @@
+POST http://localhost:5000/logs
+Content-Type: application/json
+
+{
+    "timestamp": "2020-06-24T15:27:00.123456Z",
+    "ip": "123.123.123.123",
+    "url": "http://localhost:5000/logs"
+}
