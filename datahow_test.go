@@ -8,11 +8,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/rotiroti/datahow"
 )
 
@@ -105,4 +107,13 @@ func TestHandleLog(t *testing.T) {
 	res := httptest.NewRecorder()
 	srv.ServeHTTP(res, req)
 	assertStatusCode(t, res.Code, http.StatusOK)
+
+	// Define the expected metric format
+	wantMetricFormat := `
+		# HELP unique_ip_addresses No. of unique IP addresses
+		# TYPE unique_ip_addresses counter
+		unique_ip_addresses 1
+	`
+	err = testutil.CollectAndCompare(counter, strings.NewReader(wantMetricFormat))
+	assertError(t, err, nil)
 }
