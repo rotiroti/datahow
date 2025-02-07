@@ -4,7 +4,7 @@ DataHow is a simple microservice that processes structured JSON log messages to 
 
 ## Challenge Description
 
-For the full challenge details, see [CHALLENGE.md](CHALLENGE.md).
+For the full challenge details, see [CHALLENGE](CHALLENGE.md).
 
 ## License
 
