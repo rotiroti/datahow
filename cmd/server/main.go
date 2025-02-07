@@ -25,8 +25,10 @@ func run(ctx context.Context) error {
 	// Configure API Log server
 	store := datahow.NewInMemory()
 	logServer := datahow.NewLogServer(store, ipsCounter)
+
+	// TODO: create a function to configure the HTTP log server
 	httpLogServer := http.Server{
-		Addr:              ":5001", // TODO: Pass this as environment variable
+		Addr:              ":5000",
 		Handler:           logServer,
 		ReadTimeout:       5 * time.Second,
 		WriteTimeout:      5 * time.Second,
@@ -37,10 +39,15 @@ func run(ctx context.Context) error {
 	// Configure metrics server
 	metricsServer := http.NewServeMux()
 	metricsServer.Handle("/metrics", promhttp.Handler())
+
+	// TODO: create a function to configure the HTTP metrics server
 	httpMetricsServer := &http.Server{
-		Addr:              ":9090", // TODO: Pass this as environment variable
+		Addr:              ":9102",
 		Handler:           metricsServer,
+		ReadTimeout:       5 * time.Second,
+		WriteTimeout:      5 * time.Second,
 		ReadHeaderTimeout: 3 * time.Second,
+		IdleTimeout:       30 * time.Second,
 	}
 
 	// Create a context that listens for interrupt signals
@@ -61,6 +68,7 @@ func run(ctx context.Context) error {
 
 	go func() {
 		slog.Info("Starting HTTP metrics server...")
+
 		if err := httpMetricsServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("HTTP metrics server failed to listen and serve", "error", err)
 			metricsServerErrChan <- err
