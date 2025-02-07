@@ -10,13 +10,20 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rotiroti/datahow"
 )
 
 func run(ctx context.Context) error {
+	ipsCounter := promauto.NewCounter(prometheus.CounterOpts{
+		Name: "unique_ip_addresses",
+		Help: "No. of unique IP addresses",
+	})
+
 	// Configure API Log server
 	store := datahow.NewInMemory()
-	logServer := datahow.NewLogServer(store)
+	logServer := datahow.NewLogServer(store, ipsCounter)
 	httpLogServer := http.Server{
 		Addr:              ":5001", // TODO: Pass this as environment variable
 		Handler:           logServer,
