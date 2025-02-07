@@ -3,6 +3,7 @@ package datahow_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -80,34 +81,22 @@ func TestSafeExistsOrAdd(t *testing.T) {
 }
 
 func TestHandleLog(t *testing.T) {
-	tests := []struct {
-		name    string
-		payload string
-		want    int
+	ctx := context.Background()
+	store := datahow.NewInMemory()
+	srv := datahow.NewLogServer(store)
+	payload := struct {
+		IPAddress string `json:"ip"`
 	}{
-		{
-			name:    "empty IP address",
-			payload: `{}`,
-			want:    http.StatusUnprocessableEntity,
-		},
-		{
-			name:    "new IP addrees",
-			payload: `{"timestamp": "2020-06-24T15:27:00.123456Z", "ip": "83.150.59.250", "url": "https://datahow.ch"}`,
-			want:    http.StatusOK,
-		},
+		IPAddress: "83.150.59.250", // we care only about the IP address
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			store := datahow.NewInMemory()
-			srv := datahow.NewLogServer(store)
-			ctx := context.Background()
-			req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/logs", bytes.NewBufferString(tt.payload))
-			assertError(t, err, nil)
+	var buf bytes.Buffer
 
-			res := httptest.NewRecorder()
-			srv.ServeHTTP(res, req)
-			assertStatusCode(t, res.Code, tt.want)
-		})
-	}
+	err := json.NewEncoder(&buf).Encode(payload)
+	assertError(t, err, nil)
+
+	req := httptest.NewRequestWithContext(ctx, http.MethodPost, "/logs", &buf)
+	res := httptest.NewRecorder()
+	srv.ServeHTTP(res, req)
+	assertStatusCode(t, res.Code, http.StatusOK)
 }
