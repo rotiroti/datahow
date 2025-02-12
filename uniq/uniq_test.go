@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestExistOrAdd(t *testing.T) {
+func TestHSetAdd(t *testing.T) {
 	tests := []struct {
 		name string
 		ip   string
@@ -21,21 +21,21 @@ func TestExistOrAdd(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := uniq.NewInMemory()
+			s := uniq.NewHSet()
 			if tt.name == "dup IP" {
-				_ = s.ExistOrAdd(tt.ip)
+				_ = s.Add(tt.ip)
 			}
 
-			got := s.ExistOrAdd(tt.ip)
+			got := s.Add(tt.ip)
 			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
-func TestSafeExistsOrAdd(t *testing.T) {
-	s := uniq.NewInMemory()
+func TestHSetAddConcurrent(t *testing.T) {
+	s := uniq.NewHSet()
 	ip := "83.150.59.250"
-	require.False(t, s.ExistOrAdd(ip))
+	require.False(t, s.Add(ip))
 
 	var wg sync.WaitGroup
 
@@ -46,7 +46,7 @@ func TestSafeExistsOrAdd(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			assert.True(t, s.ExistOrAdd(ip))
+			assert.True(t, s.Add(ip))
 		}()
 	}
 

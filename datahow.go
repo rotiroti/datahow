@@ -11,16 +11,16 @@ import (
 
 // LogServer represents an HTTP server that handles incoming log records.
 type LogServer struct {
-	mux    *http.ServeMux
-	store  *uniq.InMemory
-	metric prometheus.Counter
+	mux         *http.ServeMux
+	counter     uniq.Counter
+	promCounter prometheus.Counter
 }
 
 // NewLogServer creates a new LogServer with the provided InMemory storage.
-func NewLogServer(im *uniq.InMemory, c prometheus.Counter) *LogServer {
+func NewLogServer(c uniq.Counter, promc prometheus.Counter) *LogServer {
 	srv := &LogServer{
-		store:  im,
-		metric: c,
+		counter:     c,
+		promCounter: promc,
 	}
 	srv.routes()
 
@@ -53,8 +53,8 @@ func (l *LogServer) handleLog() http.HandlerFunc {
 		}
 
 		// Increment Prometheus metric only if the IP is new
-		if jsonRecord.IPAddress != "" && !l.store.ExistOrAdd(jsonRecord.IPAddress) {
-			l.metric.Inc()
+		if jsonRecord.IPAddress != "" && !l.counter.Add(jsonRecord.IPAddress) {
+			l.promCounter.Inc()
 		}
 
 		w.WriteHeader(http.StatusOK)
