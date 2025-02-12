@@ -20,4 +20,8 @@ jobs:
         with:
           go-version: "stable"
       - name: Test
-        run: go test -v -cover ./...
+        run: go test -race -coverprofile=coverage.out -covermode=atomic $(go list ./... | grep -v /cmd/)
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
