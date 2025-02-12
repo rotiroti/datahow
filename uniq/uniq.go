@@ -7,6 +7,7 @@ var _ Counter = (*HSet)(nil)
 // Counter defines the interface for counting unique elements.
 type Counter interface {
 	Add(ip string) bool
+	Count() int64
 }
 
 // HSet represents a concurrent-safe set of IP addresses.
@@ -34,4 +35,12 @@ func (h *HSet) Add(ip string) bool {
 	h.u[ip] = struct{}{}
 
 	return false
+}
+
+// Count returns the number of unique IP addresses in the set.
+func (h *HSet) Count() int64 {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	return int64(len(h.u))
 }

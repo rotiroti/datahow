@@ -52,3 +52,30 @@ func TestHSetAddConcurrent(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestHSetCount(t *testing.T) {
+	s := uniq.NewHSet()
+	require.False(t, s.Add("83.150.59.250"))
+	assert.Equal(t, int64(1), s.Count())
+}
+
+func TestHSetCountConcurrent(t *testing.T) {
+	s := uniq.NewHSet()
+	ip := "83.150.59.250"
+	require.False(t, s.Add(ip))
+
+	var wg sync.WaitGroup
+
+	maxGoroutines := 1000
+	wg.Add(maxGoroutines)
+
+	for range maxGoroutines {
+		go func() {
+			defer wg.Done()
+
+			assert.Equal(t, int64(1), s.Count())
+		}()
+	}
+
+	wg.Wait()
+}
