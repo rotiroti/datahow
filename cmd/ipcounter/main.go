@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rotiroti/datahow"
+	"github.com/rotiroti/datahow/uniq"
 )
 
 func run(ctx context.Context) error {
@@ -23,7 +24,7 @@ func run(ctx context.Context) error {
 	})
 
 	// Configure API Log server
-	store := datahow.NewInMemory()
+	store := uniq.NewInMemory()
 	logServer := datahow.NewLogServer(store, ipsCounter)
 
 	// TODO: create a function to configure the HTTP log server
