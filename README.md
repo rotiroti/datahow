@@ -64,7 +64,6 @@ running (15.1s), 00/10 VUs, 150 complete and 0 interrupted iterations
 
 - Replace the current map implementation with [sync.Map](https://pkg.go.dev/sync#Map) to improve performance in concurrent environments.
 - Explore alternative data structures, such as probabilistic counters (e.g., HyperLogLog), to reduce memory usage while maintaining accuracy.
-- Refactor [datahow.go](./datahow.go) to increase separation of concerns, ensuring that business logic is more maintainable and easier to test.
 - Add more unit tests, particularly for the `run()` function of the ipcounter service, to ensure robustness.
 - Develop additional benchmark scenarios to evaluate performance under different workloads.
 

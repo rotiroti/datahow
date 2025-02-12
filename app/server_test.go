@@ -24,6 +24,12 @@ func (m *MockCounter) Add(ip string) bool {
 	return args.Bool(0)
 }
 
+func (m *MockCounter) Count() int64 {
+	args := m.Called()
+
+	return args.Get(0).(int64)
+}
+
 type MockMetricCollector struct {
 	mock.Mock
 }
