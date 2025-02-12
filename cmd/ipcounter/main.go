@@ -24,8 +24,8 @@ func run(ctx context.Context) error {
 	})
 
 	// Configure API Log server
-	store := uniq.NewInMemory()
-	logServer := datahow.NewLogServer(store, ipsCounter)
+	hs := uniq.NewHSet()
+	logServer := datahow.NewLogServer(hs, ipsCounter)
 
 	// TODO: create a function to configure the HTTP log server
 	httpLogServer := http.Server{
