@@ -51,8 +51,8 @@ func TestHandleLog(t *testing.T) {
 	tests := []struct {
 		name        string
 		ip          string
-		isDuplicate bool
 		wantStatus  int
+		isDuplicate bool
 		shouldInc   bool
 	}{
 		{

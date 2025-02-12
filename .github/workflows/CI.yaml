@@ -9,6 +9,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -19,6 +22,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "stable"
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64.2
+          skip-cache: true
       - name: Test
         run: go test -race -coverprofile=coverage.out -covermode=atomic $(go list ./... | grep -v /cmd/)
       - name: Upload coverage reports to Codecov
